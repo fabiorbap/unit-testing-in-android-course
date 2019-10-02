@@ -28,6 +28,7 @@ public class FetchUserUseCaseSyncImplTest {
 
     private static String USER_ID = "user_id";
     private static String USER_NAME = "user_name";
+    private User user = new User(USER_NAME, USER_ID);
 
     private FetchUserUseCaseSync SUT;
 
@@ -57,9 +58,10 @@ public class FetchUserUseCaseSyncImplTest {
     // fetch user success, user stored in cache
     @Test
     public void fetchUser_success_userCached() {
+        dontCacheUser();
         ArgumentCaptor<User> ac = ArgumentCaptor.forClass(User.class);
         SUT.fetchUserSync(USER_ID);
-        verify(usersCache).cacheUser(ac.capture());
+        verify(usersCache, times(2)).cacheUser(ac.capture());
         User capture = ac.getValue();
         assertThat(capture.getUserId(), is(USER_ID));
         assertThat(capture.getUsername(), is(USER_NAME));
@@ -71,7 +73,7 @@ public class FetchUserUseCaseSyncImplTest {
     public void fetchUser_success_userCorrectlyCached() {
         cacheUser();
         ArgumentCaptor<User> ac = ArgumentCaptor.forClass(User.class);
-        SUT.fetchUserSync(USER_ID);
+        SUT.fetchUserSync(any(String.class));
         verify(usersCache, times(0)).cacheUser(ac.capture());
     }
 
@@ -115,7 +117,8 @@ public class FetchUserUseCaseSyncImplTest {
     }
 
     private void success() throws NetworkErrorException {
-        when(fetchUserHttpEndpointSync.fetchUserSync(any(String.class))).thenReturn(new FetchUserHttpEndpointSync.EndpointResult(FetchUserHttpEndpointSync.EndpointStatus.SUCCESS,
+        when(fetchUserHttpEndpointSync.fetchUserSync(any(String.class))).thenReturn(
+                new FetchUserHttpEndpointSync.EndpointResult(FetchUserHttpEndpointSync.EndpointStatus.SUCCESS,
                 USER_ID, USER_NAME));
     }
 
@@ -134,7 +137,11 @@ public class FetchUserUseCaseSyncImplTest {
     }
 
     private void cacheUser() {
-        when(usersCache.getUser(any(String.class))).thenReturn(new User(any(String.class), any(String.class)));
+        when(usersCache.getUser(any(String.class))).thenReturn(user);
+    }
+
+    private void dontCacheUser() {
+        when(usersCache.getUser(any(String.class))).thenReturn(null);
     }
 
 }
