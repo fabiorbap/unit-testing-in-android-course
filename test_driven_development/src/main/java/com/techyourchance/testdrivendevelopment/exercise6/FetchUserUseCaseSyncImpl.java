@@ -32,8 +32,8 @@ public class FetchUserUseCaseSyncImpl implements FetchUserUseCaseSync {
                     || result.getStatus() == FetchUserHttpEndpointSync.EndpointStatus.GENERAL_ERROR) {
                 return new UseCaseResult(Status.FAILURE, null);
             } else {
-                usersCache.cacheUser(new User(result.getUserId(), result.getUsername()));
-                user = usersCache.getUser(result.getUserId());
+                user = new User(userId, result.getUsername());
+                usersCache.cacheUser(user);
             }
         } else {
             user = usersCache.getUser(userId);
