@@ -47,21 +47,21 @@ public class FetchUserUseCaseSyncImplTest {
     // Passed parameters to function
 
     @Test
-    public void fetchUser_passedParameters_success() {
+    public void fetchUser_passedParameters_success() throws NetworkErrorException {
         ArgumentCaptor<String> ac = ArgumentCaptor.forClass(String.class);
         SUT.fetchUserSync(USER_ID);
-        verify(SUT, times(1)).fetchUserSync(ac.capture());
+        verify(fetchUserHttpEndpointSync, times(1)).fetchUserSync(ac.capture());
         String captures = ac.getValue();
         assertThat(captures, is(USER_ID));
     }
 
     // fetch user success, user stored in cache
     @Test
-    public void fetchUser_success_userCached() {
+    public void fetchUser_success_userAlreadyCached() {
         dontCacheUser();
         ArgumentCaptor<User> ac = ArgumentCaptor.forClass(User.class);
         SUT.fetchUserSync(USER_ID);
-        verify(usersCache, times(2)).cacheUser(ac.capture());
+        verify(usersCache, times(1)).cacheUser(ac.capture());
         User capture = ac.getValue();
         assertThat(capture.getUserId(), is(USER_ID));
         assertThat(capture.getUsername(), is(USER_NAME));
@@ -73,7 +73,7 @@ public class FetchUserUseCaseSyncImplTest {
     public void fetchUser_success_userCorrectlyCached() {
         cacheUser();
         ArgumentCaptor<User> ac = ArgumentCaptor.forClass(User.class);
-        SUT.fetchUserSync(any(String.class));
+        SUT.fetchUserSync(USER_ID);
         verify(usersCache, times(0)).cacheUser(ac.capture());
     }
 
@@ -102,7 +102,6 @@ public class FetchUserUseCaseSyncImplTest {
     public void fetchUser_networkError_errorReturned() throws NetworkErrorException {
         networkError();
         FetchUserUseCaseSync.UseCaseResult result = SUT.fetchUserSync(USER_ID);
-        verify(fetchUserHttpEndpointSync).fetchUserSync(USER_ID);
         assertThat(result.getStatus(), is(FetchUserUseCaseSync.Status.NETWORK_ERROR));
     }
 
@@ -133,7 +132,7 @@ public class FetchUserUseCaseSyncImplTest {
     }
 
     private void networkError() throws NetworkErrorException {
-        doThrow(new NetworkErrorException()).when(fetchUserHttpEndpointSync.fetchUserSync(any(String.class)));
+        doThrow(new NetworkErrorException()).when(fetchUserHttpEndpointSync).fetchUserSync(any(String.class));
     }
 
     private void cacheUser() {

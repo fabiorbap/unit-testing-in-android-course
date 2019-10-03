@@ -18,19 +18,27 @@ public class FetchUserUseCaseSyncImpl implements FetchUserUseCaseSync {
     @Override
     public UseCaseResult fetchUserSync(String userId) {
         FetchUserHttpEndpointSync.EndpointResult result;
-        try {
-            result = fetchUserHttpEndpointSync.fetchUserSync(userId);
-        } catch (NetworkErrorException e) {
-            return new UseCaseResult(Status.NETWORK_ERROR, null);
+
+        User user;
+
+        if (usersCache.getUser(userId) == null) {
+            try {
+                result = fetchUserHttpEndpointSync.fetchUserSync(userId);
+            } catch (NetworkErrorException e) {
+                return new UseCaseResult(Status.NETWORK_ERROR, null);
+            }
+
+            if (result.getStatus() == FetchUserHttpEndpointSync.EndpointStatus.AUTH_ERROR
+                    || result.getStatus() == FetchUserHttpEndpointSync.EndpointStatus.GENERAL_ERROR) {
+                return new UseCaseResult(Status.FAILURE, null);
+            } else {
+                usersCache.cacheUser(new User(result.getUserId(), result.getUsername()));
+                user = usersCache.getUser(result.getUserId());
+            }
+        } else {
+            user = usersCache.getUser(userId);
         }
 
-        if (result.getStatus() == FetchUserHttpEndpointSync.EndpointStatus.AUTH_ERROR || result.getStatus() == FetchUserHttpEndpointSync.EndpointStatus.GENERAL_ERROR){
-            return new UseCaseResult(Status.FAILURE, null);
-        } else {
-            if (usersCache.getUser(userId) != null) {
-                usersCache.cacheUser(new User(result.getUserId(), result.getUsername()));
-            }
-        }
-        return new UseCaseResult(Status.SUCCESS, usersCache.getUser(userId));
+        return new UseCaseResult(Status.SUCCESS, user);
     }
 }
