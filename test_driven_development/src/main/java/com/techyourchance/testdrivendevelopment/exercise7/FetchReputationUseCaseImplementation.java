@@ -28,7 +28,7 @@ class FetchReputationUseCaseImplementation {
         this.getReputationHttpEndpointSync = getReputationHttpEndpointSync;
     }
 
-    public UseCaseResult fetchReputation() throws NetworkException{
+    public UseCaseResult fetchReputation() {
         GetReputationHttpEndpointSync.EndpointResult result;
         try {
             result = getReputationHttpEndpointSync.getReputationSync();
